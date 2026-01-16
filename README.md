@@ -2,12 +2,53 @@
 
 ## 🚀 Démarrage Rapide
 
-### Lancer l'Application
+### Option 1: Exécutable Windows (.exe) - **RECOMMANDÉ**
+1. Ouvrez le dossier **`dist`**
+2. Double-cliquez sur **`GestionStock.exe`**
+3. L'application démarre et affiche l'URL dans la console
+4. Ouvrez votre navigateur à l'adresse: **http://127.0.0.1:5000**
+
+> **Avantage:** Aucune installation de Python requise! L'exécutable contient tout le nécessaire.
+
+### Option 2: Lancer avec Python
 1. Ouvrez le dossier **`gestion-stock`**
 2. Double-cliquez sur **`start_stock.bat`**
 3. L'application s'ouvre automatiquement dans votre navigateur
 
 > **Note:** Python doit être installé sur votre système. Si ce n'est pas le cas, téléchargez-le depuis https://www.python.org/
+
+---
+
+## 🔨 Créer l'Exécutable (Pour Développeurs)
+
+### Construire le .exe
+
+1. **Installation des dépendances:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Lancer la construction:**
+   - Double-cliquez sur **`build.bat`**
+   - OU exécutez dans le terminal:
+     ```bash
+     pyinstaller --clean gestion_stock.spec
+     ```
+
+3. **Résultat:**
+   - L'exécutable sera créé dans le dossier **`dist/GestionStock.exe`**
+   - Taille approximative: 50-80 MB (inclut Python et toutes les dépendances)
+
+### Distribution
+
+Pour distribuer l'application à d'autres utilisateurs:
+1. Copiez le fichier **`dist/GestionStock.exe`**
+2. L'utilisateur peut le lancer directement sans installer Python
+3. Les fichiers Excel (`data/stock.xlsx`, `data/historique.xlsx`) seront créés automatiquement au premier lancement
+
+> **Important:** L'exécutable crée les fichiers de données dans le même dossier où il est exécuté.
+
+
 
 ---
 
