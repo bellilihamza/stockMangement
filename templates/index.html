@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <!-- Fixed Top Bar -->
+    <div class="top-bar">
+        <div class="top-bar-content">
+            <h1 class="app-title">Stock Manager</h1>
+
+            <div class="top-bar-actions">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Rechercher un article..."
+                    onkeyup="filterTable()">
+
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    + Ajouter
+                </button>
+                <button class="btn btn-success" onclick="openSaleModal()">
+                    Vendre
+                </button>
+                <button class="btn btn-secondary" onclick="openHistoryModal()">
+                    Historique
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Stock Table -->
+        <div class="table-wrapper">
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Stock</th>
+                        <th>Prix (DA)</th>
+                        <th>Stock Min</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <!-- Data will be loaded dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Ajouter un Article</h2>
+                <span class="close" onclick="closeProductModal()">&times;</span>
+            </div>
+            <form id="productForm" onsubmit="saveProduct(event)">
+                <input type="hidden" id="productId">
+
+                <div class="form-group">
+                    <label for="nom_article">Nom de l'Article</label>
+                    <input type="text" id="nom_article" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stock">Stock</label>
+                        <input type="number" id="stock" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="min_stock">Stock Min</label>
+                        <input type="number" id="min_stock" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prix">Prix (DA)</label>
+                    <input type="number" id="prix" min="0" step="0.01" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sale Modal -->
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Effectuer une Vente</h2>
+                <span class="close" onclick="closeSaleModal()">&times;</span>
+            </div>
+            <form id="saleForm" onsubmit="processSale(event)">
+                <div class="form-group">
+                    <label for="sale_article">Article</label>
+                    <select id="sale_article" required>
+                        <option value="">-- Sélectionner un article --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sale_quantite">Quantité</label>
+                    <input type="number" id="sale_quantite" min="1" required>
+                </div>
+
+                <div id="salePreview" class="sale-preview"></div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSaleModal()">Annuler</button>
+                    <button type="submit" class="btn btn-success">Valider</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Historique des Ventes</h2>
+                <span class="close" onclick="closeHistoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="table-wrapper-modal">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Article</th>
+                                <th>Quantité</th>
+                                <th>Prix Total (DA)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Data will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="alert-container"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
