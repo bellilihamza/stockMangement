@@ -1,0 +1,121 @@
+﻿python : Traceback 
+(most recent call 
+last):
+At line:1 char:1
++ python 
+diagnostic_sync.py > d
+iagonal_full_output.tx
+t 2>&1
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (Traceback    
+ (most recent call    
+ last)::String) [    
+], RemoteExceptio    n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  File "C:\Users\Taha\
+AppData\Local\Programs
+\Python\Python312\Lib\
+site-packages\gspread\
+client.py", line 143, 
+in open_by_key
+    spreadsheet = Spre
+adsheet(self.http_clie
+nt, {"id": key})
+                  ^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
+  File "C:\Users\Taha\
+AppData\Local\Programs
+\Python\Python312\Lib\
+site-packages\gspread\
+spreadsheet.py", line 
+25, in __init__
+    metadata = self.fe
+tch_sheet_metadata()
+               ^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Taha\
+AppData\Local\Programs
+\Python\Python312\Lib\
+site-packages\gspread\
+spreadsheet.py", line 
+209, in 
+fetch_sheet_metadata
+    return self.client
+.fetch_sheet_metadata(
+self.id, 
+params=params)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^
+  File "C:\Users\Taha\
+AppData\Local\Programs
+\Python\Python312\Lib\
+site-packages\gspread\
+http_client.py", line 
+287, in 
+fetch_sheet_metadata
+    r = 
+self.request("get", 
+url, params=params)
+        ^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^
+  File "C:\Users\Taha\
+AppData\Local\Programs
+\Python\Python312\Lib\
+site-packages\gspread\
+http_client.py", line 
+112, in request
+    raise 
+APIError(response)
+gspread.exceptions.API
+Error: {'code': 403, 
+'message': 'The 
+caller does not have 
+permission', 
+'status': 
+'PERMISSION_DENIED'}
+
+The above exception 
+was the direct cause 
+of the following 
+exception:
+
+Traceback (most 
+recent call last):
+  File "C:\Users\Taha\
+Documents\portfolio\al
+a\gestion-stock\diagno
+stic_sync.py", line 
+31, in test_connection
+    spreadsheet = clie
+nt.open_by_key(config.
+SPREADSHEET_ID)
+                  ^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+  File "C:\Users\Taha\
+AppData\Local\Programs
+\Python\Python312\Lib\
+site-packages\gspread\
+client.py", line 148, 
+in open_by_key
+    raise 
+PermissionError from 
+ex
+PermissionError
+--- Diagnostic Connection Google Sheets ---
+Spreadsheet ID: 1MVb2y5Wp-ghNBm7ONuSeItXopSFDB3aBMxtZ86GB4uQ
+Service Account File: C:\Users\Taha\Documents\portfolio\ala\gestion-stock\med-orange.json
+[SUCCESS] Authentification reussie.
+[INFO] Tentative d'ouverture du spreadsheet...
+[ERROR] Erreur inattendue (PermissionError): 

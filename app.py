@@ -7,6 +7,8 @@ from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import os
 from datetime import datetime
+import cloud_sync
+import config
 
 app = Flask(__name__)
 
@@ -14,10 +16,31 @@ app = Flask(__name__)
 STOCK_FILE = 'data/stock.xlsx'
 HISTORIQUE_FILE = 'data/historique.xlsx'
 
+# Cloud sync configuration
+SPREADSHEET_ID = config.SPREADSHEET_ID
+SERVICE_ACCOUNT_FILE = config.SERVICE_ACCOUNT_FILE
+
 # Initialize Excel files if they don't exist
 def init_excel_files():
     """Create Excel files with proper structure if they don't exist"""
     os.makedirs('data', exist_ok=True)
+    
+    # Try to restore from cloud if files are missing
+    files_missing = not os.path.exists(STOCK_FILE) or not os.path.exists(HISTORIQUE_FILE)
+    
+    if files_missing and cloud_sync.check_internet_connection():
+        print("📥 Fichiers manquants - Tentative de restauration depuis le cloud...")
+        result = cloud_sync.restore_from_cloud(
+            SPREADSHEET_ID,
+            SERVICE_ACCOUNT_FILE,
+            STOCK_FILE,
+            HISTORIQUE_FILE
+        )
+        if result['success']:
+            print(f"✅ {result['message']}")
+            return
+        else:
+            print(f"⚠️ {result['message']}")
     
     # Initialize stock.xlsx
     if not os.path.exists(STOCK_FILE):
@@ -235,19 +258,105 @@ def get_alerts():
 
 @app.route('/api/historique', methods=['GET'])
 def get_history():
-    """Get sales history"""
+    """Get sales history with optional filtering"""
     try:
         if os.path.exists(HISTORIQUE_FILE):
             df_hist = pd.read_excel(HISTORIQUE_FILE)
-            # Sort by date descending (most recent first)
+            
+            # Convert date column to datetime for filtering
+            df_hist['date'] = pd.to_datetime(df_hist['date'])
+            
+            # Get filter parameters
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
+            
+            # Apply date filters if provided
+            if start_date:
+                df_hist = df_hist[df_hist['date'] >= pd.to_datetime(start_date)]
+            if end_date:
+                # Add 1 day to end_date to include the entire day
+                df_hist = df_hist[df_hist['date'] <= pd.to_datetime(end_date) + pd.Timedelta(days=1)]
+            
+            # Calculate totals before converting to dict
+            total_amount = float(df_hist['prix_total'].sum()) if not df_hist.empty else 0
+            total_quantity = int(df_hist['quantite'].sum()) if not df_hist.empty else 0
+            
+            # Sort by date descending
             df_hist = df_hist.sort_values('date', ascending=False)
+            
+            # Convert dates back to string for JSON serialization
+            df_hist['date'] = df_hist['date'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            
             history_list = df_hist.to_dict('records')
-            return jsonify(history_list)
+            
+            return jsonify({
+                'sales': history_list,
+                'total_amount': total_amount,
+                'total_quantity': total_quantity
+            })
         else:
-            return jsonify([])
+            return jsonify({
+                'sales': [],
+                'total_amount': 0,
+                'total_quantity': 0
+            })
     except Exception as e:
         print(f"Error reading history: {e}")
-        return jsonify([])
+        return jsonify({
+            'sales': [],
+            'total_amount': 0,
+            'total_quantity': 0
+        }), 500
+
+@app.route('/api/sync/status', methods=['GET'])
+def get_sync_status():
+    """Get current sync status"""
+    try:
+        status = cloud_sync.get_sync_status()
+        return jsonify(status)
+    except Exception as e:
+        return jsonify({
+            'status': 'offline',
+            'message': f'Erreur: {str(e)}',
+            'last_sync': None
+        })
+
+@app.route('/api/sync/now', methods=['POST'])
+def trigger_sync():
+    """Manually trigger cloud sync"""
+    try:
+        result = cloud_sync.sync_to_cloud(
+            SPREADSHEET_ID,
+            SERVICE_ACCOUNT_FILE,
+            STOCK_FILE,
+            HISTORIQUE_FILE
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        }), 500
+
+@app.route('/api/sync/restore', methods=['POST'])
+def trigger_restore():
+    """Manually trigger restore from cloud"""
+    try:
+        result = cloud_sync.restore_from_cloud(
+            SPREADSHEET_ID,
+            SERVICE_ACCOUNT_FILE,
+            STOCK_FILE,
+            HISTORIQUE_FILE
+        )
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     # Initialize Excel files

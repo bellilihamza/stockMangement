@@ -19,6 +19,7 @@ a = Analysis(
         'jinja2',
         'werkzeug',
         'click',
+        'jaraco.text',
     ],
     hookspath=[],
     hooksconfig={},

@@ -17,6 +17,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Check for alerts every 5 seconds
     setInterval(checkAlerts, 5000);
+
+    // Update sync status immediately and every 10 seconds
+    updateSyncStatus();
+    setInterval(updateSyncStatus, 10000);
 });
 
 /**
@@ -87,7 +91,7 @@ function formatPrice(price) {
         style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-    }).format(price) + ' DA';
+    }).format(price) + ' TND';
 }
 
 /**
@@ -391,75 +395,182 @@ function filterTable() {
 }
 
 /**
- * Open history modal
+ * Switch between Stock and History views
  */
-async function openHistoryModal() {
-    document.getElementById('historyModal').style.display = 'block';
-    await loadHistory();
+function showView(viewName) {
+    const stockView = document.getElementById('stockView');
+    const historyView = document.getElementById('historyView');
+    const navHistory = document.getElementById('navHistory');
+    const navStock = document.getElementById('navStock');
+    const searchInput = document.getElementById('searchInput');
+
+    if (viewName === 'history') {
+        stockView.classList.remove('active');
+        historyView.classList.add('active');
+        navHistory.style.display = 'none';
+        navStock.style.display = 'block';
+        searchInput.style.display = 'none'; // Hide main search for history
+        clearHistoryFilters();
+    } else {
+        stockView.classList.add('active');
+        historyView.classList.remove('active');
+        navHistory.style.display = 'block';
+        navStock.style.display = 'none';
+        searchInput.style.display = 'block';
+        refreshStock();
+    }
 }
 
 /**
- * Close history modal
- */
-function closeHistoryModal() {
-    document.getElementById('historyModal').style.display = 'none';
-}
-
-/**
- * Load sales history
+ * Load sales history with filters
  */
 async function loadHistory() {
     try {
-        const response = await fetch('/api/historique');
-        const history = await response.json();
-        renderHistoryTable(history);
+        const start = document.getElementById('historyStart').value;
+        const end = document.getElementById('historyEnd').value;
+
+        let url = '/api/historique';
+        const params = new URLSearchParams();
+        if (start) params.append('start_date', start);
+        if (end) params.append('end_date', end);
+
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('API Error');
+
+        const data = await response.json();
+        renderHistoryTable(data.sales);
+        updateHistorySummary(data.total_amount, data.total_quantity);
     } catch (error) {
         showAlert('Erreur lors du chargement de l\'historique', 'error');
-        console.error('Error:', error);
+        console.error('History Load Error:', error);
     }
 }
 
 /**
- * Render history table
+ * Render history table with local search filter
  */
 function renderHistoryTable(history) {
     const tbody = document.getElementById('historyTableBody');
+    const searchFilter = document.getElementById('historySearch').value.toLowerCase().trim();
     tbody.innerHTML = '';
 
-    if (history.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">Aucune vente enregistrée</td></tr>';
+    // Local search filter for instant responsiveness
+    const filteredHistory = history.filter(item =>
+        item.nom_article.toLowerCase().includes(searchFilter)
+    );
+
+    if (filteredHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 60px; color: #8c98a4;">
+            <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+            Aucune vente ne correspond à vos critères
+        </td></tr>`;
         return;
     }
 
-    history.forEach(item => {
+    filteredHistory.forEach(item => {
         const row = document.createElement('tr');
 
-        // Format date
         const date = new Date(item.date);
         const formattedDate = date.toLocaleString('fr-FR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         });
 
+        // Safe price calculation
+        const unitPrice = item.quantite > 0 ? item.prix_total / item.quantite : 0;
+
         row.innerHTML = `
-            <td>${formattedDate}</td>
-            <td>${item.nom_article}</td>
-            <td>${item.quantite}</td>
-            <td>${formatPrice(item.prix_total)}</td>
+            <td style="font-family: monospace; color: #6c757d;">${formattedDate}</td>
+            <td style="font-weight: 600; color: #2c3e50;">${item.nom_article}</td>
+            <td style="font-weight: 500;">${item.quantite}</td>
+            <td style="color: #495057;">${formatPrice(unitPrice)}</td>
+            <td style="font-weight: 700; color: #27ae60;">${formatPrice(item.prix_total)}</td>
         `;
 
         tbody.appendChild(row);
     });
 }
 
+/**
+ * Update summary dashboard
+ */
+function updateHistorySummary(totalAmount, totalQty) {
+    const amountEl = document.getElementById('totalHistoryAmount');
+    const qtyEl = document.getElementById('totalHistoryQty');
+
+    if (amountEl) amountEl.textContent = formatPrice(totalAmount);
+    if (qtyEl) qtyEl.textContent = totalQty.toLocaleString('fr-FR');
+}
+
+/**
+ * Handle preset period filters
+ */
+function setHistoryFilter(period) {
+    const startInput = document.getElementById('historyStart');
+    const endInput = document.getElementById('historyEnd');
+
+    // Update button states
+    const btnIds = { 'today': 'btnToday', 'week': 'btnWeek', 'month': 'btnMonth', 'all': 'btnAll' };
+    Object.values(btnIds).forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('active');
+    });
+
+    const activeBtn = document.getElementById(btnIds[period]);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const now = new Date();
+    let startDate = "";
+    let endDate = now.toISOString().split('T')[0];
+
+    if (period === 'today') {
+        startDate = now.toISOString().split('T')[0];
+    } else if (period === 'week') {
+        const date = new Date();
+        date.setDate(now.getDate() - 7);
+        startDate = date.toISOString().split('T')[0];
+    } else if (period === 'month') {
+        const date = new Date();
+        date.setMonth(now.getMonth() - 1);
+        startDate = date.toISOString().split('T')[0];
+    } else if (period === 'all') {
+        startDate = "";
+        endDate = "";
+    }
+
+    startInput.value = startDate;
+    endInput.value = endDate;
+
+    loadHistory();
+}
+
+/**
+ * Common filter application
+ */
+function applyHistoryFilters() {
+    loadHistory();
+}
+
+/**
+ * Reset all history filters to defaults
+ */
+function clearHistoryFilters() {
+    document.getElementById('historyStart').value = "";
+    document.getElementById('historyEnd').value = "";
+    document.getElementById('historySearch').value = "";
+
+    // Reset to 'All'
+    setHistoryFilter('all');
+}
+
 // Close modals when clicking outside
 window.onclick = function (event) {
     const productModal = document.getElementById('productModal');
     const saleModal = document.getElementById('saleModal');
-    const historyModal = document.getElementById('historyModal');
 
     if (event.target === productModal) {
         closeProductModal();
@@ -467,7 +578,119 @@ window.onclick = function (event) {
     if (event.target === saleModal) {
         closeSaleModal();
     }
-    if (event.target === historyModal) {
-        closeHistoryModal();
+}
+
+// ===== CLOUD SYNC FUNCTIONS =====
+
+/**
+ * Update sync status from server
+ */
+async function updateSyncStatus() {
+    try {
+        const response = await fetch('/api/sync/status');
+        const status = await response.json();
+        renderSyncBadge(status);
+    } catch (error) {
+        console.error('Error updating sync status:', error);
+        // Show offline status if can't reach server
+        renderSyncBadge({
+            status: 'offline',
+            message: 'Hors ligne',
+            last_sync: null
+        });
+    }
+}
+
+/**
+ * Render sync status badge
+ */
+function renderSyncBadge(status) {
+    const badge = document.getElementById('syncStatusBadge');
+    const icon = badge.querySelector('.sync-icon');
+    const text = badge.querySelector('.sync-text');
+
+    // Remove all status classes
+    badge.classList.remove('sync-online', 'sync-offline', 'sync-syncing', 'sync-restored');
+
+    // Update based on status
+    switch (status.status) {
+        case 'online':
+            badge.classList.add('sync-online');
+            icon.textContent = '🟢';
+            text.textContent = 'En ligne';
+            break;
+        case 'offline':
+            badge.classList.add('sync-offline');
+            icon.textContent = '🔴';
+            text.textContent = 'Hors ligne';
+            break;
+        case 'syncing':
+            badge.classList.add('sync-syncing');
+            icon.textContent = '🟡';
+            text.textContent = 'Synchronisation...';
+            break;
+        case 'restored':
+            badge.classList.add('sync-restored');
+            icon.textContent = '🔵';
+            text.textContent = 'Restauré';
+            // Show notification
+            showAlert('Données restaurées depuis le cloud', 'success');
+            // Reset to online after 5 seconds
+            setTimeout(() => {
+                updateSyncStatus();
+            }, 5000);
+            break;
+        default:
+            badge.classList.add('sync-offline');
+            icon.textContent = '🔴';
+            text.textContent = 'Inconnu';
+    }
+
+    // Update title with last sync time
+    if (status.last_sync) {
+        badge.title = `Dernière sync: ${status.last_sync}`;
+    } else {
+        badge.title = status.message || 'Statut de synchronisation';
+    }
+}
+
+/**
+ * Manually trigger cloud sync
+ */
+async function triggerSync() {
+    try {
+        // Show syncing status immediately
+        renderSyncBadge({
+            status: 'syncing',
+            message: 'Synchronisation en cours...',
+            last_sync: null
+        });
+
+        // Trigger sync
+        const response = await fetch('/api/sync/now', {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert(result.message, 'success');
+        } else {
+            showAlert(result.message, 'error');
+        }
+
+        // Update status after sync
+        setTimeout(() => {
+            updateSyncStatus();
+        }, 1000);
+
+    } catch (error) {
+        showAlert('Erreur lors de la synchronisation', 'error');
+        console.error('Error triggering sync:', error);
+
+        // Update status
+        setTimeout(() => {
+            updateSyncStatus();
+        }, 1000);
     }
 }

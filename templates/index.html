@@ -12,43 +12,134 @@
     <!-- Fixed Top Bar -->
     <div class="top-bar">
         <div class="top-bar-content">
-            <h1 class="app-title">Stock Manager</h1>
+            <div class="title-section">
+                <h1 class="app-title" onclick="showView('stock')" style="cursor: pointer;">Med Orange</h1>
+                <div id="syncStatusBadge" class="sync-badge sync-offline">
+                    <span class="sync-icon">🔴</span>
+                    <span class="sync-text">Hors ligne</span>
+                </div>
+            </div>
 
             <div class="top-bar-actions">
                 <input type="text" id="searchInput" class="search-bar" placeholder="Rechercher un article..."
                     onkeyup="filterTable()">
 
+                <button class="btn btn-sync" onclick="triggerSync()" title="Synchroniser avec Google Sheets">
+                    ☁️ Synchroniser
+                </button>
                 <button class="btn btn-primary" onclick="openAddModal()">
                     + Ajouter
                 </button>
                 <button class="btn btn-success" onclick="openSaleModal()">
                     Vendre
                 </button>
-                <button class="btn btn-secondary" onclick="openHistoryModal()">
+                <button id="navHistory" class="btn btn-secondary" onclick="showView('history')">
                     Historique
+                </button>
+                <button id="navStock" class="btn btn-secondary" onclick="showView('stock')" style="display: none;">
+                    ← Stock
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Main Content Area -->
-    <div class="main-content">
-        <!-- Stock Table -->
-        <div class="table-wrapper">
-            <table id="stockTable">
-                <thead>
-                    <tr>
-                        <th>Article</th>
-                        <th>Stock</th>
-                        <th>Prix (DA)</th>
-                        <th>Stock Min</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="stockTableBody">
-                    <!-- Data will be loaded dynamically -->
-                </tbody>
-            </table>
+    <div id="stockView" class="view-container active">
+        <div class="main-content">
+            <div class="table-wrapper">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Article</th>
+                            <th>Stock</th>
+                            <th>Prix (TND)</th>
+                            <th>Stock Min</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <!-- Data will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- History View (2-Column) -->
+    <div id="historyView" class="view-container">
+        <div class="history-layout">
+            <!-- Left Sidebar (Fixed) -->
+            <div class="history-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Filtres Temporels</h3>
+                    <div class="btn-group-vertical">
+                        <button id="btnToday" class="btn-sidebar"
+                            onclick="setHistoryFilter('today')">Aujourd'hui</button>
+                        <button id="btnWeek" class="btn-sidebar" onclick="setHistoryFilter('week')">Cette
+                            Semaine</button>
+                        <button id="btnMonth" class="btn-sidebar" onclick="setHistoryFilter('month')">Ce Mois</button>
+                        <button id="btnAll" class="btn-sidebar active" onclick="setHistoryFilter('all')">Tout</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Personnalisé</h3>
+                    <div class="custom-date-grid">
+                        <div class="date-field">
+                            <label>De:</label>
+                            <input type="date" id="historyStart" onchange="applyHistoryFilters()">
+                        </div>
+                        <div class="date-field">
+                            <label>À:</label>
+                            <input type="date" id="historyEnd" onchange="applyHistoryFilters()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Recherche</h3>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="historySearch" placeholder="Nom de l'article..."
+                            onkeyup="applyHistoryFilters()">
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Résumé des Ventes</h3>
+                    <div class="summary-card-vertical">
+                        <span class="summary-label">Total Revenu</span>
+                        <span id="totalHistoryAmount" class="summary-value">0.00 TND</span>
+                    </div>
+                    <div class="summary-card-vertical">
+                        <span class="summary-label">Quantité Vendue</span>
+                        <span id="totalHistoryQty" class="summary-value">0</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-danger btn-block" onclick="clearHistoryFilters()" style="margin-top: auto;">
+                    Effacer les filtres
+                </button>
+            </div>
+
+            <!-- Right Content (Scrollable Table) -->
+            <div class="history-content">
+                <div class="table-wrapper-plain">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date & Heure</th>
+                                <th>Article</th>
+                                <th>Quantité</th>
+                                <th>Prix Unitaire</th>
+                                <th>Total (TND)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Data loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -80,7 +171,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="prix">Prix (DA)</label>
+                    <label for="prix">Prix (TND)</label>
                     <input type="number" id="prix" min="0" step="0.01" required>
                 </div>
 
@@ -119,33 +210,6 @@
                     <button type="submit" class="btn btn-success">Valider</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- History Modal -->
-    <div id="historyModal" class="modal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h2>Historique des Ventes</h2>
-                <span class="close" onclick="closeHistoryModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="table-wrapper-modal">
-                    <table id="historyTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Article</th>
-                                <th>Quantité</th>
-                                <th>Prix Total (DA)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyTableBody">
-                            <!-- Data will be loaded dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 
