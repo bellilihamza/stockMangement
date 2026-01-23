@@ -209,6 +209,7 @@ async function deleteProduct(id) {
  */
 function openSaleModal() {
     document.getElementById('saleForm').reset();
+    document.getElementById('saleSearch').value = ''; // Clear search
     document.getElementById('salePreview').innerHTML = '';
     updateSaleArticleSelect();
     document.getElementById('saleModal').style.display = 'block';
@@ -225,11 +226,13 @@ function closeSaleModal() {
 /**
  * Update sale article select dropdown
  */
-function updateSaleArticleSelect() {
+function updateSaleArticleSelect(filteredData = null) {
     const select = document.getElementById('sale_article');
     select.innerHTML = '<option value="">-- Sélectionner un article --</option>';
 
-    stockData.forEach(item => {
+    const displayData = filteredData || stockData;
+
+    displayData.forEach(item => {
         const option = document.createElement('option');
         option.value = item.id;
         option.textContent = `${item.nom_article} (Stock: ${item.stock})`;
@@ -239,6 +242,17 @@ function updateSaleArticleSelect() {
     // Add change event to show preview
     select.onchange = updateSalePreview;
     document.getElementById('sale_quantite').oninput = updateSalePreview;
+}
+
+/**
+ * Filter sale articles based on search input
+ */
+function filterSaleArticles() {
+    const searchTerm = document.getElementById('saleSearch').value.toLowerCase();
+    const filteredStock = stockData.filter(item => 
+        item.nom_article.toLowerCase().includes(searchTerm)
+    );
+    updateSaleArticleSelect(filteredStock);
 }
 
 /**

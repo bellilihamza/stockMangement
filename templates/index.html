@@ -192,6 +192,11 @@
             </div>
             <form id="saleForm" onsubmit="processSale(event)">
                 <div class="form-group">
+                    <label for="saleSearch">Rechercher un Article</label>
+                    <input type="text" id="saleSearch" placeholder="Taper pour filtrer..." onkeyup="filterSaleArticles()">
+                </div>
+
+                <div class="form-group">
                     <label for="sale_article">Article</label>
                     <select id="sale_article" required>
                         <option value="">-- Sélectionner un article --</option>

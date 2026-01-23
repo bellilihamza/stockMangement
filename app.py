@@ -358,16 +358,22 @@ def trigger_restore():
             'message': f'Erreur: {str(e)}'
         }), 500
 
+import webbrowser
+from threading import Timer
+
 if __name__ == '__main__':
     # Initialize Excel files
     init_excel_files()
     
-    # Run the Flask app
-    print("=" * 50)
-    print("🚀 Système de Gestion de Stock")
-    print("=" * 50)
-    print("📊 Serveur démarré sur: http://127.0.0.1:5000")
-    print("💾 Base de données: Excel (stock.xlsx, historique.xlsx)")
-    print("=" * 50)
+    # URL to open
+    url = "http://127.0.0.1:5000"
     
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    # Function to open browser
+    def open_browser():
+        webbrowser.open_new(url)
+
+    # Start a timer to open the browser after 1.5 seconds (gives server time to start)
+    Timer(1.5, open_browser).start()
+    
+    # Run the Flask app (debug must be False for windowed mode)
+    app.run(debug=False, host='127.0.0.1', port=5000)
