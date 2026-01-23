@@ -151,28 +151,30 @@
                 <span class="close" onclick="closeProductModal()">&times;</span>
             </div>
             <form id="productForm" onsubmit="saveProduct(event)">
-                <input type="hidden" id="productId">
+                <div class="modal-body">
+                    <input type="hidden" id="productId">
 
-                <div class="form-group">
-                    <label for="nom_article">Nom de l'Article</label>
-                    <input type="text" id="nom_article" required>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
-                        <label for="stock">Stock</label>
-                        <input type="number" id="stock" min="0" required>
+                        <label for="nom_article">Nom de l'Article</label>
+                        <input type="text" id="nom_article" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stock">Stock</label>
+                            <input type="number" id="stock" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="min_stock">Stock Min</label>
+                            <input type="number" id="min_stock" min="0" required>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="min_stock">Stock Min</label>
-                        <input type="number" id="min_stock" min="0" required>
+                        <label for="prix">Prix (TND)</label>
+                        <input type="number" id="prix" min="0" step="0.01" required>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="prix">Prix (TND)</label>
-                    <input type="number" id="prix" min="0" step="0.01" required>
                 </div>
 
                 <div class="form-actions">
@@ -191,24 +193,27 @@
                 <span class="close" onclick="closeSaleModal()">&times;</span>
             </div>
             <form id="saleForm" onsubmit="processSale(event)">
-                <div class="form-group">
-                    <label for="saleSearch">Rechercher un Article</label>
-                    <input type="text" id="saleSearch" placeholder="Taper pour filtrer..." onkeyup="filterSaleArticles()">
-                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="saleSearch">Rechercher un Article</label>
+                        <input type="text" id="saleSearch" placeholder="Taper pour filtrer..."
+                            onkeyup="filterSaleArticles()">
+                    </div>
 
-                <div class="form-group">
-                    <label for="sale_article">Article</label>
-                    <select id="sale_article" required>
-                        <option value="">-- Sélectionner un article --</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label for="sale_article">Article</label>
+                        <select id="sale_article" required>
+                            <option value="">-- Sélectionner un article --</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="sale_quantite">Quantité</label>
-                    <input type="number" id="sale_quantite" min="1" required>
-                </div>
+                    <div class="form-group">
+                        <label for="sale_quantite">Quantité</label>
+                        <input type="number" id="sale_quantite" min="1" required>
+                    </div>
 
-                <div id="salePreview" class="sale-preview"></div>
+                    <div id="salePreview" class="sale-preview"></div>
+                </div>
 
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeSaleModal()">Annuler</button>

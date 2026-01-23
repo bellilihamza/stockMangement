@@ -102,7 +102,7 @@ function openAddModal() {
     document.getElementById('modalTitle').textContent = 'Ajouter un Article';
     document.getElementById('productForm').reset();
     document.getElementById('productId').value = '';
-    document.getElementById('productModal').style.display = 'block';
+    document.getElementById('productModal').style.display = 'flex';
 }
 
 /**
@@ -119,7 +119,7 @@ function editProduct(id) {
     document.getElementById('stock').value = product.stock;
     document.getElementById('prix').value = product.prix;
     document.getElementById('min_stock').value = product.min_stock;
-    document.getElementById('productModal').style.display = 'block';
+    document.getElementById('productModal').style.display = 'flex';
 }
 
 /**
@@ -212,7 +212,7 @@ function openSaleModal() {
     document.getElementById('saleSearch').value = ''; // Clear search
     document.getElementById('salePreview').innerHTML = '';
     updateSaleArticleSelect();
-    document.getElementById('saleModal').style.display = 'block';
+    document.getElementById('saleModal').style.display = 'flex';
 }
 
 /**
@@ -249,7 +249,7 @@ function updateSaleArticleSelect(filteredData = null) {
  */
 function filterSaleArticles() {
     const searchTerm = document.getElementById('saleSearch').value.toLowerCase();
-    const filteredStock = stockData.filter(item => 
+    const filteredStock = stockData.filter(item =>
         item.nom_article.toLowerCase().includes(searchTerm)
     );
     updateSaleArticleSelect(filteredStock);
